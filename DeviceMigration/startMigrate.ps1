@@ -83,8 +83,8 @@ function generatePassword()
 
 # FUNCTION: msGraphAuthenticate
 # DESCRIPTION: Authenticates to Microsoft Graph.
-function msGraphAuthenticate()
-{
+#function msGraphAuthenticate()
+<# {
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory=$true)]
@@ -109,7 +109,7 @@ function msGraphAuthenticate()
     $headers.Add("Content-Type", "application/json")
     $headers = @{'Authorization'="$($token)"}
     return $headers
-}
+} #>
 
 # Import config settings from JSON file
 $config = Get-Content ".\config.json" | ConvertFrom-Json
@@ -144,7 +144,7 @@ Copy-Item -Path ".\*" -Destination $destination -Recurse -Force
 log "Package files copied successfully."
 
 # Authenticate to source tenant if exists
-log "Checking for source tenant in JSON settings..."
+<# log "Checking for source tenant in JSON settings..."
 if([string]::IsNullOrEmpty($config.sourceTenant.tenantName))
 {
     log "Source tenant not found in JSON settings."
@@ -166,10 +166,10 @@ else
         log "Exiting script."
         exitScript -exitCode 4 -functionName "msGraphAuthenticate"
     }
-}
+} #>
 
 
-# Authenticate to target tenant if exists
+<# # Authenticate to target tenant if exists
 log "Checking for target tenant in JSON settings..."
 if([string]::IsNullOrEmpty($config.targetTenant.tenantName))
 {
@@ -192,7 +192,7 @@ else
         log "Exiting script."
         exitScript -exitCode 4 -functionName "msGraphAuthenticate"
     }
-}
+} #>
 
 
 # Check Microsoft account connection registry policy
@@ -387,7 +387,7 @@ else
 {
     $currentUPN = ($currentUser.upn).Split("@")[0]
 }
-# If target tenant headers exist, get new user object
+<# # If target tenant headers exist, get new user object
 $newHeaders = ""
 if($targetHeaders)
 {
@@ -408,8 +408,8 @@ if($newUserObject)
         SAMName = $newUserObject.value.userPrincipalName.Split("@")[0]
         SID = $newUserObject.value.securityIdentifier
     }
-}
-{
+} #>
+<# {
     # Make sure nuget package is installed
     $installedNuget = Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue
     if(-not($installedNuget))
@@ -480,9 +480,9 @@ if($newUserObject)
         log "Exiting script."
         exitScript -exitCode 4 -functionName "newUserObject"
     }
-}       
+}        #>
 
-# Write new user object to registry
+<# # Write new user object to registry
 foreach($x in $newUser.Keys)
 {
     $newUserName = "NEW_$($x)"
@@ -501,7 +501,7 @@ foreach($x in $newUser.Keys)
             log "Failed to write $($newUserName) with value $($newUserValue).  Error: $($message)."
         }
     }
-}
+} #>
 
 
 
@@ -570,7 +570,7 @@ else
 }
 
 
-# Set migration tasks
+<# # Set migration tasks
 $tasks = @("reboot","postMigrate")
 foreach($task in $tasks)
 {
@@ -595,7 +595,7 @@ foreach($task in $tasks)
             exitScript -exitCode 4 -functionName "schtasks"
         }
     }
-}
+} #>
 
 
 # Leave Azure AD / Entra Join
@@ -624,7 +624,7 @@ else
 # DESCRIPTION: Unjoins the device from the domain.
 # PARAMETERS: $unjoinAccount - The account to unjoin the device with, $hostname - The hostname of the device.
 
-function unjoinDomain()
+<# function unjoinDomain()
 {
     [CmdletBinding()]
     Param(
@@ -691,9 +691,9 @@ else
 {
     log "PC is not Domain/Hybrid Joined."
 }
+ #>
 
-
-################### SCCM SECTION ###################
+<# ################### SCCM SECTION ###################
 # FUNCTION: removeSCCM
 # DESCRIPTION: Removes the SCCM client from the device.
 function removeSCCM()
@@ -822,9 +822,9 @@ if($config.SCCM -eq $true)
 else
 {
     log "SCCM not enabled."
-}
+} #>
 
-# Install provisioning package
+<# # Install provisioning package
 $ppkg = (Get-ChildItem -Path $config.localPath -Filter "*.ppkg" -Recurse).FullName
 if($ppkg)
 {
@@ -846,10 +846,10 @@ else
 {
     log "Provisioning package not found."
     exitScript -exitCode 4 -functionName "Install-ProvisioningPackage"
-}
+} #>
 
 # Delete Intune and Autopilot object if exist
-if($pc.mdm -eq $true)
+<# if($pc.mdm -eq $true)
 {
     if([string]::IsNullOrEmpty($pc.intuneId))
     {
@@ -897,11 +897,11 @@ if($pc.mdm -eq $true)
 else
 {
     log "PC is not MDM enrolled."
-}
+} #>
 # FUNCTION: setAutoLogonAdmin
 # DESCRIPTION: Sets the auto logon account for the administrator 
 # PARAMETERS: $username - The username to set auto logon for, $password - The password to set auto logon for.
-function setAutoLogonAdmin()
+<# function setAutoLogonAdmin()
 {
     Param(
         [string]$regPath = "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon",
@@ -919,10 +919,10 @@ function setAutoLogonAdmin()
     reg.exe add $regPath /v "DefaultUserName" /t REG_SZ /d $migrateAdmin /f | Out-Host
     reg.exe add $regPath /v "DefaultPassword" /t REG_SZ /d "@Password*123" | Out-Host
     log "Successfully set auto logon to $migrateAdmin."
-}
+} #>
 
 # Set Auto logon Admin account
-log "Setting Auto logon Admin account..."
+<# log "Setting Auto logon Admin account..."
 try
 {
     setAutoLogonAdmin
@@ -964,5 +964,5 @@ log "Lock screen caption set successfully."
 # Stop transcript and restart
 log "$($pc.hostname) will reboot in 30 seconds..."
 Stop-Transcript
-shutdown -r -t 30
+shutdown -r -t 30 #>
 
