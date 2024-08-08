@@ -42,7 +42,7 @@ function exitScript()
     {
         log "Exiting script with critical error on $($functionName)."
         log "Disabling tasks..."
-        foreach($task in $tasks)
+       <#  foreach($task in $tasks)
         {
             Disable-ScheduledTask -TaskName $task -Verbose
             log "Disabled $($task) task."
@@ -52,7 +52,7 @@ function exitScript()
         log "Enabled logon provider."
         log "Rebooting device..."
         Stop-Transcript
-        shutdown -r -t 30
+        shutdown -r -t 30 #>
     }
     else
     {
@@ -84,13 +84,13 @@ $context = whoami
 log "Running as $($context)"
 
 # disable reboot task
-log "Disabling reboot task..."
+<# log "Disabling reboot task..."
 Disable-ScheduledTask -TaskName "Reboot"
-log "Reboot task disabled"
+log "Reboot task disabled" #>
 
-# disable auto logon
+<# # disable auto logon
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "AutoAdminLogon" -Value 0 -Verbose
-log "Auto logon enabled."
+log "Auto logon enabled." #>
 
 # Retrieve variables from registry
 log "Retrieving variables from registry..."
@@ -125,7 +125,7 @@ else
     log "aadBrokerPlugin not found"
 }
 
-# Create new user profile
+<# # Create new user profile
 log "Creating $($NEW_SAMName) profile..."
 Add-Type -TypeDefinition @"
 using System;
@@ -163,15 +163,15 @@ switch ($CreateProfileReturn) {
     default {
         throw "An error occurred when creating the user profile: $CreateProfileReturn"
     }
-}
+} #>
 
-# Delete New profile
+<# # Delete New profile
 log "Deleting new profile..."
 $newProfile = Get-CimInstance -ClassName Win32_UserProfile | Where-Object {$_.SID -eq $NEW_SID}
 Remove-CimInstance -InputObject $newProfile -Verbose | Out-Null
-log "New profile deleted."
+log "New profile deleted." #>
 
-# Change ownership of user profile
+<# # Change ownership of user profile
 log "Changing ownership of user profile..."
 $currentProfile = Get-CimInstance -ClassName Win32_UserProfile | Where-Object {$_.SID -eq $OLD_SID}
 $changes = @{
@@ -179,7 +179,7 @@ $changes = @{
     Flags = 0
 }
 $currentProfile | Invoke-CimMethod -MethodName ChangeOwner -Arguments $changes
-Start-Sleep -Seconds 1
+Start-Sleep -Seconds 1 #>
 
 # Cleanup logon cache
 function cleanupLogonCache()
@@ -246,7 +246,7 @@ catch
     exitScript -exitCode 1 -functionName "cleanupLogonCache"
 }
 
-# cleanup identity store cache
+<# # cleanup identity store cache
 function cleanupIdentityStore()
 {
     Param(
@@ -291,9 +291,9 @@ function cleanupIdentityStore()
             }
         }
     }
-}
+} #>
 
-# run cleanup identity store cache if not domain joined
+<# # run cleanup identity store cache if not domain joined
 if($OLD_domainJoined -eq "NO")
 {
     log "Running cleanupIdentityStore..."
@@ -313,9 +313,9 @@ if($OLD_domainJoined -eq "NO")
 else
 {
     log "Machine is domain joined - skipping cleanupIdentityStore."
-}
+} #>
 
-# update samname in identityStore LogonCache (this is required when displaynames are the same in both tenants, and new samname gets random characters added at the end)
+<# # update samname in identityStore LogonCache (this is required when displaynames are the same in both tenants, and new samname gets random characters added at the end)
 function updateSamNameLogonCache()
 {
     Param(
@@ -429,9 +429,9 @@ function updateSamNameLogonCache()
     {
         log "New username is $NEW_SAMName, which does not match older username ($OLD_SAMName) with _##### appended to end. SamName LogonCache registry will not be updated."
     }
-}
+} #>
 
-# run updateSamNameLogonCache
+<# # run updateSamNameLogonCache
 log "Running updateSamNameLogonCache..."
 try
 {
@@ -444,10 +444,10 @@ catch
     log "Failed to run updateSamNameLogonCache: $message"
     log "Exiting script..."
     exitScript -exitCode 1 -functionName "updateSamNameLogonCache"
-}
+} #>
 
 # update samname in identityStore Cache (this is required when displaynames are the same in both tenants, and new samname gets random characters added at the end)
-function updateSamNameIdentityStore()
+<# function updateSamNameIdentityStore()
 {
     Param(
         [string]$idCache = "HKLM:\Software\Microsoft\IdentityStore\Cache",
@@ -500,9 +500,9 @@ function updateSamNameIdentityStore()
     {
         log "New username is $NEW_SAMName, which does not match older username ($OLD_SAMName) with _##### appended to end. SamName IdentityStore registry will not be updated."
     }
-}
+} #>
 
-# run updateSamNameIdentityStore if not domain joined
+<# # run updateSamNameIdentityStore if not domain joined
 if($OLD_domainJoined -eq "NO")
 {
     log "Running updateSamNameIdentityStore..."
@@ -522,9 +522,9 @@ if($OLD_domainJoined -eq "NO")
 else
 {
     log "Machine is domain joined - skipping updateSamNameIdentityStore."
-}
+} #>
 
-# enable logon provider
+<# # enable logon provider
 reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{60b78e88-ead8-445c-9cfd-0b87f74ea6cd}" /v "Disabled" /t REG_DWORD /d 0 /f | Out-Host
 log "Enabled logon provider."
 
@@ -540,9 +540,9 @@ else
 reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "legalnoticecaption" /t REG_SZ /d "Welcome to $($tenant)" /f | Out-Host 
 reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "legalnoticetext" /t REG_SZ /d "Please log in with your new email address" /f | Out-Host
 log "Lock screen caption set."
-
+ #>
 
 log "Reboot.ps1 complete"
-shutdown -r -t 00
+# shutdown -r -t 00
 Stop-Transcript
 
